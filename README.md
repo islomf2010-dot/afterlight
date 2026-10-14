@@ -49,9 +49,11 @@ npm run preview      # http://127.0.0.1:4173
 
 > **Deploying?** This is a client-routed single-page app, so your host must
 > rewrite unknown paths to `index.html` or refreshing on `/lab/portal` will 404.
-> `vite preview` already does this. For Netlify: `/* /index.html 200`. For
-> nginx: `try_files $uri $uri/ /index.html;`. For S3/CloudFront: set the error
-> document to `index.html`.
+> `vite preview` already does this, and **`vercel.json` is included** for
+> Vercel — it performs the rewrite and gives hashed build assets a one-year
+> immutable cache while leaving `/assets/*` and other real files alone. For
+> Netlify: `/* /index.html 200`. For nginx: `try_files $uri $uri/ /index.html;`.
+> For S3/CloudFront: set the error document to `index.html`.
 
 ### First run on a machine with no GPU
 
@@ -76,16 +78,23 @@ version. This flag is also what the browser test suite uses.
 | `npm run test:e2e` | Playwright browser suite (builds and serves automatically) |
 | `npm run e2e:install` | One-time Playwright browser download |
 
-Two development harnesses live in `scripts/` and are run with plain Node:
+Six standalone harnesses live in `scripts/` and run with plain Node against a
+running `preview`. Each prints a pass/fail line per check and exits non-zero on
+failure, so they are usable in CI as well as by hand.
+
+| Script | What it checks |
+| --- | --- |
+| `scripts/verify.mjs` | Drives the critical flows and prints every console message |
+| `scripts/diagnose.mjs` | 18 behavioural probes: navigation churn, history back/forward, scrubbing in both directions, resize mid-animation, canvas lifecycle in the lab, hostile stored parameters, reduced motion, console cleanliness |
+| `scripts/responsive.mjs` | 4 viewports × 4 routes: overflow, clipping, touch-target sizes. `--shots` also writes screenshots |
+| `scripts/contrast.mjs` | Measures the painted luminance of every scene caption against WCAG AA and fails if any block falls short |
+| `scripts/perf.mjs` | Frame-time sampling per scene, per laboratory study and per quality preset |
+| `scripts/shots.mjs` | Writes reference screenshots of every scene, route and the phone layout to `.shots/` |
 
 ```bash
-node scripts/verify.mjs          # drives the critical flows, prints every console message
-node scripts/shots.mjs           # writes reference screenshots to .shots/
+npm run build && npm run preview &
+node scripts/diagnose.mjs
 ```
-
-`verify.mjs` is the fastest way to see whether something regressed without
-reading a test report; it exits non-zero if a step fails and prints the full
-console log at the end.
 
 ---
 
@@ -121,7 +130,7 @@ capture. Every control is wired to a running material — see
 | **Fog density** | 0 – 1 | `scene.fog` in the laboratory, scaled across the scene. |
 | **Bloom intensity** | 0 – 1.5 | The `Bloom` pass in the post chain. Skipped entirely on the low quality tier. |
 | **Animation speed** | 0 – 2× | The shared clock every scene reads from. `0` freezes motion without stopping rendering. |
-| **Pause / Resume** | — | Halts the shared clock. Rendering continues so the frame stays on screen. |
+| **Pause / Resume** | — | Halts the shared clock that drives every scene. Rendering continues so the frame stays on screen. The post-processing grain runs on the renderer's own clock and keeps breathing — Pause stops the *film*, not the grain. |
 | **Randomise** | — | New in-range values for all six parameters, plus a variant code in the status line. |
 | **Reset** | — | Factory values, un-pauses, and clears the notice. |
 | **Capture** | — | Re-renders the current frame through the same post chain you are looking at, then downloads a PNG. The outcome is also written to the *Last capture* readout, which does not auto-dismiss. |
@@ -175,7 +184,8 @@ src/
   app/            shell, providers, the loading registry, root fallback
   audio/          procedural Web Audio engine + the store bridge
   components/     UI: navigation, overlays, panels, scene overlays, fallback
-  graphics/       capability probe, GLSL, materials, particle systems, post FX
+  graphics/
+    effects/      canvas lifecycle + capture bridge, shared by film and lab
     shaders/      ocean, particles, portal/domain-warp, shared noise + fog
     materials/    MeshStandardMaterial patched via onBeforeCompile
     particles/    seeded field generation + the GPU-animated cloud
@@ -188,6 +198,11 @@ src/
   utils/          maths, PRNG, storage, downloads, formatting
   tests/          Vitest setup
 ```
+
+`graphics/effects/CanvasLifecycle.tsx` exists because of a leak found during audit:
+canvas context-loss and visibility listeners were appended to a module-level array
+that was never drained, so every navigation stacked another pair. The listeners
+are now removed by the effect that added them.
 
 ### The ideas that hold it together
 
@@ -292,13 +307,51 @@ and find-in-page working. Touch scrolling is never intercepted either.
   on unmount; R3F handles its own.
 - **Hidden tabs.** Rendering is suspended on `visibilitychange` when enabled,
   and the audio context is suspended with it.
+- **Touch targets scale with the pointer, not the screen.** Control heights come
+  from `--al-control-sm/md/lg`, and a `(pointer: coarse)` block overrides them to
+  44 px. The desktop HUD stays restrained; a phone gets targets that a thumb can
+  actually hit. `e2e/responsive.spec.ts` asserts the real rendered box for both
+  pointer types, so a token that stops working fails the build rather than
+  quietly shrinking a button.
 - **No store subscriptions in `useFrame`.** The render loop reads non-reactive
   mirrors; `useThree` is always called with a selector, because subscribing to
   the whole R3F store re-renders the component on every frame.
 
-> No frame-rate numbers are claimed here. The film has not been profiled on
-> physical hardware; the Settings panel shows a live frame-rate readout so you
-> can measure it on your own machine.
+### Measured, and what it does and does not mean
+
+`node scripts/perf.mjs` samples real `requestAnimationFrame` deltas (best of
+three runs, first five frames discarded to skip shader-compile spikes):
+
+| Scene | SwiftShader | Representative of a GPU? |
+| --- | --- | --- |
+| The Void | 11–13 fps | No |
+| Fracture | 20–23 fps | No |
+| The Threshold | 6–9 fps | No |
+| Echoes | 10–12 fps | No |
+| Afterlight | 21–23 fps | No |
+
+**These are software-rasteriser numbers and must not be read as the experience on
+a real GPU.** Chromium here is rasterising every pixel on the CPU. What *is*
+portable is the ordering: The Threshold is consistently the most expensive scene,
+and the quality presets are monotonic in the right direction
+(`low` 10.5 → `medium` 3.4 fps at the same DPR step), which is the fill-rate
+signature you would expect.
+
+That investigation produced one real fix. The corridor walls fill the viewport
+and were running a 3D value noise — eight hash evaluations per fragment — for a
+surface that is planar, where a 2D noise is visually identical at four. Swapping
+it (`vnoise2` in `graphics/shaders/common.ts`) moved The Threshold from 6.5 to
+8.1 fps, a 25% gain with no change to the image. Two further hypotheses were
+measured and rejected: removing a punctual light gained ~2%, removing the ceiling
+~8%. The remaining cost is genuine geometry, so it was left alone rather than
+buying frames by cutting scene content.
+
+Two performance claims this project makes are **not** verified, and are marked as
+such: the 60 fps target on real hardware, and the hidden-tab suspension, which
+cannot be driven in headless Chromium (`Page.setWebLifecycleState` accepts only
+`frozen`/`active`, and a second tab does not mark the first hidden). The latter is
+covered by a unit test of the visibility hook instead — see
+`src/hooks/usePageVisibility.test.ts`.
 
 ---
 
@@ -322,6 +375,20 @@ and find-in-page working. Touch scrolling is never intercepted either.
   Up/Down work, and screen readers announce the value).
 - **No hover-only content.** Every interaction is reachable by pointer, keyboard
   or touch.
+- **Caption contrast is measured, not asserted.** `node scripts/contrast.mjs`
+  reads each scene caption's real box out of the live DOM, samples the painted
+  pixels, and reports the ratio against the WCAG AA 4.5:1 floor. It currently
+  passes on all ten desktop and phone blocks at **5.13–6.49:1**.
+
+  Two defects were found this way and would not have been caught by a DOM
+  assertion. `--al-text-ghost` was 18% opacity — used for whole sentences, it
+  measured **1.42:1**. And the caption scrim is `position: absolute` with
+  `z-index: auto`, which per the CSS painting order draws *above* in-flow
+  content, so the scrim meant to sit behind the caption was in fact drawn on top
+  of it and crushed it to **1.37:1** no matter what colour token was used. The
+  stage now carries `relative` so both are positioned and the later one wins.
+  `--al-text-ghost` is now reserved for the one decorative mark that needs it
+  (the TechLabel dot) and is documented as never-for-a-sentence.
 - **Audio is optional and opt-in.** Nothing is audible until you press ENTER, and
   the AudioContext is created *synchronously inside that gesture* — constructing
   it from a store effect would fall outside the browser's user-activation window
@@ -331,18 +398,29 @@ and find-in-page working. Touch scrolling is never intercepted either.
 
 ## Testing
 
-**Unit — Vitest, 133 tests.** Focused on the logic that is expensive to get
+**Unit — Vitest, 138 tests.** Focused on the logic that is expensive to get
 right and invisible when it breaks: parameter validation and clamping, config
 serialisation and hostile-input handling, storage under corruption and quota
 failure, the disintegration schedule's invariants, seeded field determinism, the
-quality budget, the progress registry and shared clock.
+quality budget, the progress registry, shared clock, and the page-visibility hook
+that suspends rendering in a background tab.
 
-**Browser — Playwright, 35 tests.** The critical flows in a real browser: the
+**Browser — Playwright, 55 tests.** The critical flows in a real browser: the
 loading gate and ENTER, all six scenes reached by scrolling, the scene rail,
 Fracture's controls, replay, every route including refresh and 404, the
 laboratory's controls, pause, capture download, export and import, keyboard
 routes, reduced motion, settings persistence, the mobile drawer, and the
 no-WebGL path.
+
+`e2e/responsive.spec.ts` runs four viewports (1440, 1280, 768, 390) against four
+routes and asserts no horizontal overflow, no clipped text, and that every
+visible target meets 24 px on a fine pointer and 44 px on a coarse one. It also
+pins the header rule — the inline Settings control appears if and only if the
+desktop navigation does. That suite exists because of three real defects that
+every other test could not see: `hidden` silently loses to `inline-flex` in
+Tailwind's cascade, so `SETTINGS` and `AUDIO ON` rendered on phones while the DOM
+claimed otherwise; the header overflowed at exactly 768 px; and the scene rail's
+markers were 20×24 px on touch.
 
 One suite is deliberately unusual: `e2e/rendering.spec.ts` takes screenshots
 and measures the luminance histogram of what was actually painted. It exists
@@ -350,6 +428,12 @@ because two real bugs got through every other check — the transition curtain
 permanently covering the film, and the laboratory's particle exhibit rendering
 at zero opacity. Both were invisible to DOM assertions. This suite now also
 proves that `Pause` genuinely freezes the picture.
+
+It waits for the frame to *stabilise* rather than for a fixed period. A four-second
+timeout was correct on an idle machine and wrong on a loaded one, which produced a
+genuine flake in full-suite runs; polling until two consecutive samples agree
+removes the coupling without loosening an assertion, since a broken scene never
+settles on a composed frame.
 
 ```bash
 npm test
@@ -376,13 +460,17 @@ identical offline and cannot break because a host disappeared.
 
 ## Known limitations
 
-- **No frame-rate claims.** The piece has not been profiled on physical
-  hardware; the only measured number in this repository comes from headless
-  Chromium on SwiftShader, which is not representative. Use the live readout in
-  Settings.
+- **No frame-rate claims for real hardware.** The piece has not been profiled on
+  a GPU. The only frame timings in this repository come from headless Chromium
+  on SwiftShader; they are reported above as software-rasteriser numbers and are
+  not a prediction. Use the live readout in Settings.
+- **Hidden-tab suspension is verified structurally, not by measurement.** It
+  cannot be exercised end-to-end in headless Chromium — see the Performance
+  section. The hook is unit-tested; the behaviour on a real tab switch is not
+  observed here.
 - **Software rendering is refused, not attempted.** If the probe sees a software
   rasteriser it serves the written version rather than a slideshow. `?renderer=force`
-  overrides this.
+  overrides this, and every measurement above was taken with it on.
 - **`THREE.Clock` deprecation warning.** `@react-three/fiber` still constructs a
   `THREE.Clock` internally. It is emitted by the library, not by this code, and
   is the only console output during a normal session.

@@ -18,18 +18,6 @@ export const NAV_ITEMS: readonly NavItem[] = [
   { to: '/credits', label: 'Credits', index: '04' },
 ] as const;
 
-export const SkipLink = () => (
-  <a
-    href="#main"
-    className={[
-      'label-mono fixed left-4 top-4 z-[120] -translate-y-24 bg-ivory px-4 py-3 text-obsidian',
-      'transition-transform duration-200 ease-[var(--al-ease-out)] focus:translate-y-0',
-    ].join(' ')}
-  >
-    Skip to content
-  </a>
-);
-
 export interface NavigationProps {
   /** Sound toggle is only meaningful where audio can exist. */
   onToggleSound: () => void;
@@ -84,18 +72,21 @@ export const Navigation = ({
         <div className="flex h-[var(--al-nav-h)] items-center justify-between gap-6 px-[var(--al-gutter)]">
           <NavLink
             to="/"
-            className="group flex items-baseline gap-3"
+            className="group flex min-h-[var(--al-control-tap)] items-baseline gap-3"
             aria-label="AFTERLIGHT — return to the beginning of the film"
           >
             <span className="display-title text-md transition-colors group-hover:text-silver">
               AFTERLIGHT
             </span>
-            <span className="label-mono hidden text-[color:var(--al-text-ghost)] md:inline">
+            <span className="label-mono hidden text-[color:var(--al-text-quiet)] lg:inline">
               The World Between Frames
             </span>
           </NavLink>
 
-          <nav aria-label="Primary" className="hidden items-center gap-8 md:flex">
+          {/* `lg`, not `md`: at 768px the wordmark plus the sound and settings
+              controls already fill the bar, and switching the drawer on any
+              earlier made the header overflow the viewport. */}
+          <nav aria-label="Primary" className="hidden items-center gap-6 lg:flex xl:gap-8">
             {NAV_ITEMS.map((item) => (
               <NavLink key={item.to} to={item.to} end={item.to === '/'} className={linkClass}>
                 {({ isActive }) => (
@@ -115,32 +106,41 @@ export const Navigation = ({
           </nav>
 
           <div className="flex items-center gap-3">
-            <TechLabel dot tone={soundEnabled ? 'live' : 'muted'} className="hidden lg:inline-flex">
-              {soundEnabled ? 'AUDIO ON' : 'AUDIO OFF'}
-            </TechLabel>
+            {/*
+              Visibility is owned by a wrapper element, never by `hidden` on the
+              control itself. These components already set a display utility in
+              their own base classes, and in Tailwind's cascade `hidden` loses to
+              it — which is why the settings button and the audio indicator used
+              to appear in the phone header even though they were marked hidden.
+            */}
+            <span className="hidden lg:contents">
+              <TechLabel dot tone={soundEnabled ? 'live' : 'muted'} className="whitespace-nowrap">
+                {soundEnabled ? 'AUDIO ON' : 'AUDIO OFF'}
+              </TechLabel>
+            </span>
+
+            <span className="hidden sm:block">
+              <button
+                type="button"
+                onClick={onToggleSound}
+                aria-pressed={soundEnabled}
+                className="label-mono flex h-[var(--al-control-sm)] items-center gap-2 whitespace-nowrap border border-[color:var(--al-line)] px-3 text-[color:var(--al-text-muted)] transition-colors hover:border-[color:var(--al-line-strong)] hover:text-ivory"
+              >
+                {soundEnabled ? 'SOUND ON' : 'SOUND OFF'}
+              </button>
+            </span>
+
+            {/* Below `lg` the drawer carries these, so an inline copy only adds
+                width the header does not have. */}
+            <span className="hidden lg:block">
+              <Button variant="ghost" size="sm" onClick={onOpenSettings} aria-label="Open settings">
+                Settings
+              </Button>
+            </span>
 
             <button
               type="button"
-              onClick={onToggleSound}
-              aria-pressed={soundEnabled}
-              className="label-mono hidden h-9 items-center gap-2 border border-[color:var(--al-line)] px-3 text-[color:var(--al-text-muted)] transition-colors hover:border-[color:var(--al-line-strong)] hover:text-ivory sm:inline-flex"
-            >
-              {soundEnabled ? 'SOUND ON' : 'SOUND OFF'}
-            </button>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onOpenSettings}
-              aria-label="Open settings"
-              className="hidden sm:inline-flex"
-            >
-              Settings
-            </Button>
-
-            <button
-              type="button"
-              className="label-mono inline-flex h-9 items-center border border-[color:var(--al-line)] px-3 text-ivory md:hidden"
+              className="label-mono inline-flex h-[var(--al-control-sm)] items-center border border-[color:var(--al-line)] px-3 text-ivory lg:hidden"
               aria-expanded={menuOpen}
               aria-controls="al-mobile-nav"
               onClick={() => setMenuOpen((open) => !open)}
@@ -154,7 +154,7 @@ export const Navigation = ({
 
       {/* Mobile drawer */}
       {menuOpen ? (
-        <div className="fixed inset-0 z-[110] md:hidden">
+        <div className="fixed inset-0 z-[110] lg:hidden">
           <button
             type="button"
             aria-label="Close menu"

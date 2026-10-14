@@ -52,6 +52,26 @@ export const VALUE_NOISE = /* glsl */ `
     );
   }
 
+  /**
+   * 2D value noise — four hashes instead of the eight a 3D octave costs.
+   *
+   * The corridor walls are planar and cover the whole viewport, so per-pixel
+   * noise there is the single most expensive thing in the scene. On a surface
+   * with a known plane there is no visual reason to pay for the third axis.
+   */
+  float vnoise2(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+
+    float n00 = hash21(i);
+    float n10 = hash21(i + vec2(1.0, 0.0));
+    float n01 = hash21(i + vec2(0.0, 1.0));
+    float n11 = hash21(i + vec2(1.0, 1.0));
+
+    return mix(mix(n00, n10, f.x), mix(n01, n11, f.x), f.y);
+  }
+
   float fbm3(vec3 p, int octaves) {
     float sum = 0.0;
     float amp = 0.5;

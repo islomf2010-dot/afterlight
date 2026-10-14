@@ -46,7 +46,7 @@ export const Credits = () => {
                 <div key={credit.role} className="flex flex-col gap-1 border-b border-[color:var(--al-line)] pb-3">
                   <dt className="label-mono text-[color:var(--al-text-faint)]">{credit.role}</dt>
                   <dd className="text-base text-[color:var(--al-text-muted)]">{credit.names}</dd>
-                  {credit.note ? <dd className="text-sm text-[color:var(--al-text-ghost)]">{credit.note}</dd> : null}
+                  {credit.note ? <dd className="text-sm text-[color:var(--al-text-quiet)]">{credit.note}</dd> : null}
                 </div>
               ))}
             </dl>
@@ -59,7 +59,7 @@ export const Credits = () => {
                 <li key={scene.id} className="flex items-baseline gap-4">
                   <span className="label-mono w-8 shrink-0 text-[color:var(--al-text-faint)]">{scene.numeral}</span>
                   <span className="text-sm text-[color:var(--al-text-muted)]">{scene.title}</span>
-                  <span className="ml-auto text-2xs text-[color:var(--al-text-ghost)]">{scene.telemetry}</span>
+                  <span className="ml-auto text-2xs text-[color:var(--al-text-quiet)]">{scene.telemetry}</span>
                 </li>
               ))}
             </ol>

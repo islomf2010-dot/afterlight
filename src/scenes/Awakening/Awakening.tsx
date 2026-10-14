@@ -140,7 +140,7 @@ export const Awakening = () => {
             <TechLabel tone={ready ? 'live' : 'muted'} dot>
               {ready ? 'Systems nominal' : `Loading · ${percent}%`}
             </TechLabel>
-            <span className="font-mono text-2xs tabular-nums text-[color:var(--al-text-ghost)]">
+            <span className="font-mono text-2xs tabular-nums text-[color:var(--al-text-quiet)]">
               {percent.toString().padStart(3, ' ')}%
             </span>
           </div>
@@ -167,7 +167,7 @@ export const Awakening = () => {
                 >
                   {task.label}
                 </span>
-                <span className="flex-1 truncate text-right text-[color:var(--al-text-ghost)]">
+                <span className="flex-1 truncate text-right text-[color:var(--al-text-quiet)]">
                   {task.state === 'error' ? task.detail : task.detail}
                 </span>
               </li>
@@ -186,7 +186,7 @@ export const Awakening = () => {
           >
             Enter
           </Button>
-          <p id="awakening-audio-hint" className="max-w-[34ch] text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+          <p id="awakening-audio-hint" className="max-w-[34ch] text-2xs leading-relaxed text-[color:var(--al-text-quiet)]">
             {soundEnabled || acknowledgedAudio
               ? 'Sound starts with the film. Use the toggle at any time.'
               : 'Pressing Enter also starts the ambient sound. You can mute it at any time.'}

@@ -57,11 +57,6 @@ export const wrap = (x: number, min: number, max: number): number => {
   return range === 0 ? min : min + fract((x - min) / range) * range;
 };
 
-export const roundTo = (value: number, decimals: number): number => {
-  const p = 10 ** decimals;
-  return Math.round(value * p) / p;
-};
-
 export const isFiniteNumber = (value: unknown): value is number =>
   typeof value === 'number' && Number.isFinite(value);
 

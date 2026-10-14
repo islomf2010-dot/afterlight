@@ -10,7 +10,6 @@
 import { create } from 'zustand';
 import { loadPersisted, persistDebounced, persistNow } from './persistedState';
 import {
-  DEFAULT_EFFECT_PARAMS,
   clampParamValue,
   defaultEffectParams,
   parseEffectConfig,
@@ -98,11 +97,6 @@ const mirror = (params: EffectParams): EffectParams => {
   Object.assign(labParams, params);
   return params;
 };
-
-const snapshot = (params: EffectParams): string =>
-  Object.values(params)
-    .map((v) => Number(v).toFixed(3))
-    .join('|');
 
 export const useLabStore = create<LabState>((set, get) => ({
   params: persistedParams,
@@ -228,7 +222,3 @@ export const useLabStore = create<LabState>((set, get) => ({
   notify: (notice) => set({ notice: { ...notice, at: Date.now() } }),
   dismissNotice: () => set({ notice: null }),
 }));
-
-/** True when the mirror and the last persisted snapshot have diverged. */
-export const labParamsChanged = (): boolean =>
-  snapshot(labParams) !== snapshot(DEFAULT_EFFECT_PARAMS);

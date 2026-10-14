@@ -65,7 +65,7 @@ export const WebGLFallbackNotice = () => (
           Laboratory
         </Button>
       </div>
-      <p className="font-mono text-2xs text-[color:var(--al-text-ghost)]">
+      <p className="font-mono text-2xs text-[color:var(--al-text-quiet)]">
         renderer: {capabilities.renderer}
       </p>
     </div>

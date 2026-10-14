@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ACESFilmicToneMapping } from 'three';
 
@@ -11,6 +11,7 @@ import {
   ShaderWarmup,
 } from '@/graphics/effects/CanvasRuntime';
 import { PostFX } from '@/graphics/effects/PostFX';
+import { CanvasLifecycle } from '@/graphics/effects/CanvasLifecycle';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { capabilities, useQualityBudget } from '@/graphics/capabilitiesContext';
 import { useJourneyStore } from '@/store/useJourneyStore';
@@ -27,9 +28,6 @@ const SCENE_COMPONENTS: Partial<Record<SceneId, React.LazyExoticComponent<React.
   echoes: lazy(() => SCENE_LOADERS.echoes()),
   afterlight: lazy(() => SCENE_LOADERS.afterlight()),
 };
-
-/** Detach callbacks for canvas-level listeners R3F does not clean up for us. */
-const alCanvasRegistry: Array<() => void> = [];
 
 /** Atmosphere per scene. Recreated only when the scene changes, never per frame. */
 const SCENE_ATMOSPHERE: Record<SceneId, { fog: string; density: number }> = {
@@ -88,6 +86,10 @@ export const JourneyCanvas = ({ className }: { className?: string }) => {
   const suspended = pauseWhenHidden && hidden;
   const dpr: [number, number] = [1, budget.dpr];
 
+  // Stable identities: these are passed into an effect's dependency list.
+  const handleContextLost = useCallback(() => setContextLost(true), []);
+  const handleContextRestored = useCallback(() => setContextLost(false), []);
+
   if (!capabilities.webgl || contextLost) return null;
 
   return (
@@ -114,24 +116,12 @@ export const JourneyCanvas = ({ className }: { className?: string }) => {
             'webgl',
             gl.capabilities.isWebGL2 ? 'WebGL2 context granted' : 'WebGL1 context granted',
           );
-
-          const canvas = gl.domElement;
-          const onLost = (event: Event): void => {
-            // Preventing the default lets the browser attempt restoration.
-            event.preventDefault();
-            setContextLost(true);
-          };
-          const onRestored = (): void => setContextLost(false);
-          canvas.addEventListener('webglcontextlost', onLost, false);
-          canvas.addEventListener('webglcontextrestored', onRestored, false);
-          // The canvas outlives React's cleanup in R3F, so the detach function
-          // is parked in a module list and never leaks a listener.
-          alCanvasRegistry.push(() => {
-            canvas.removeEventListener('webglcontextlost', onLost);
-            canvas.removeEventListener('webglcontextrestored', onRestored);
-          });
         }}
       >
+        <CanvasLifecycle
+          onContextLost={handleContextLost}
+          onContextRestored={handleContextRestored}
+        />
         <SceneAtmosphere scene={activeScene} />
         <ClockDriver running={!suspended} />
         <ExposureDriver target={entered ? 1 : 0} />

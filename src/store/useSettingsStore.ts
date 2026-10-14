@@ -231,5 +231,3 @@ export const applyRuntimeFlags = (state: Settings): void => {
     root.style.setProperty('--al-grain-opacity', state.grain ? '0.055' : '0');
   }
 };
-
-export const currentSettings = (): SettingsState => useSettingsStore.getState();

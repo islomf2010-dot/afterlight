@@ -9,8 +9,16 @@ import { useEffect, useState } from 'react';
  */
 export const visibility = { hidden: false, focused: true };
 
+/** Guarded because not every DOM implementation provides `hasFocus`. */
+const hasFocus = (): boolean =>
+  typeof document !== 'undefined' && typeof document.hasFocus === 'function'
+    ? document.hasFocus()
+    : true;
+
 const compute = (): boolean =>
-  typeof document === 'undefined' ? false : document.visibilityState === 'hidden';
+  typeof document === 'undefined' || typeof document.visibilityState !== 'string'
+    ? false
+    : document.visibilityState === 'hidden';
 
 export const usePageVisibility = (): boolean => {
   const [hidden, setHidden] = useState<boolean>(compute);
@@ -21,11 +29,11 @@ export const usePageVisibility = (): boolean => {
       setHidden(visibility.hidden);
     };
     const onFocus = (): void => {
-      visibility.focused = typeof document !== 'undefined' && document.hasFocus();
+      visibility.focused = hasFocus();
     };
 
     visibility.hidden = compute();
-    visibility.focused = typeof document !== 'undefined' ? document.hasFocus() : true;
+    visibility.focused = hasFocus();
 
     document.addEventListener('visibilitychange', onVisibility);
     window.addEventListener('focus', onFocus);
@@ -39,5 +47,3 @@ export const usePageVisibility = (): boolean => {
 
   return hidden;
 };
-
-export const isPageHidden = (): boolean => visibility.hidden;

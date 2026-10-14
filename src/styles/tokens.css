@@ -21,9 +21,24 @@
 
   /* --- Semantic colour --------------------------------------------------- */
   --al-text: var(--al-ivory);
-  --al-text-muted: rgba(191, 197, 202, 0.62);
+  --al-text-muted: rgba(193, 199, 204, 0.74);
   --al-text-faint: rgba(191, 197, 202, 0.34);
+  /*
+    Decorative only. At 0.18 this is below the WCAG threshold against any
+    backdrop — measured at 1.08:1 on the real frames — so it is reserved for
+    marks that carry no meaning on their own (the TechLabel dot).
+    Never use it for a sentence.
+  */
   --al-text-ghost: rgba(191, 197, 202, 0.18);
+  /*
+    Secondary prose: captions, control hints, inactive labels. Both this and
+    --al-text-muted are set from measurement, not taste: scripts/contrast.mjs
+    reads the painted pixels of every scene caption and the lowest was still
+    under 4.5:1 at the previous values. The two-tone separation that remains is
+    ~0.12 alpha, which is enough to read as hierarchy without either tone
+    dropping out of the accessibility floor.
+  */
+  --al-text-quiet: rgba(203, 209, 214, 0.88);
   --al-line: rgba(191, 197, 202, 0.14);
   --al-line-strong: rgba(191, 197, 202, 0.3);
   --al-surface: rgba(11, 12, 14, 0.72);
@@ -67,6 +82,17 @@
   --al-space-9: 7rem;
   --al-space-10: 11rem;
 
+  /* --- Control sizing -----------------------------------------------------
+     One source of truth for interactive element heights, so the HUD can stay
+     restrained on a mouse without leaving 28px targets on a phone. The
+     `(pointer: coarse)` override below raises them to the 44px that both
+     Apple's HIG and Material advise. ---------------------------------------- */
+  --al-control-sm: 2rem;
+  --al-control-md: 2.75rem;
+  --al-control-lg: 3.5rem;
+  --al-control-track: 1.5rem; /* range input / switch row */
+  --al-control-tap: 2.75rem; /* inline nav targets */
+
   /* --- Layout ------------------------------------------------------------ */
   --al-gutter: clamp(1.125rem, 0.6rem + 2.4vw, 3.5rem);
   --al-measure: 62ch;
@@ -107,6 +133,19 @@
     --al-dur-base: 1ms;
     --al-dur-slow: 1ms;
     --al-dur-cinematic: 1ms;
+  }
+}
+
+/* Touch pointers: every interactive element grows to a comfortably hittable
+   size. Only the hit area changes — typography and layout stay identical, so
+   the composition is the same at every size. */
+@media (pointer: coarse) {
+  :root {
+    --al-control-sm: 2.75rem;
+    --al-control-md: 2.75rem;
+    --al-control-lg: 3rem;
+    --al-control-track: 2.75rem;
+    --al-control-tap: 2.75rem;
   }
 }
 

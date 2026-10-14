@@ -59,7 +59,7 @@ export const Slider = ({
         ) : null}
       </div>
 
-      <div className="relative flex h-6 items-center">
+      <div className="relative flex h-[var(--al-control-track)] items-center">
         {/* Filled portion of the track */}
         <span
           aria-hidden="true"
@@ -77,7 +77,7 @@ export const Slider = ({
           aria-describedby={hint ? hintId : undefined}
           onChange={(event) => onChange(Number(event.target.value))}
           className={[
-            'relative z-10 h-6 w-full cursor-pointer appearance-none bg-transparent',
+            'relative z-10 h-[var(--al-control-track)] w-full cursor-pointer appearance-none bg-transparent',
             '[&::-webkit-slider-runnable-track]:h-px [&::-webkit-slider-runnable-track]:bg-[color:var(--al-line-strong)]',
             '[&::-webkit-slider-thumb]:mt-[-5px] [&::-webkit-slider-thumb]:h-[11px] [&::-webkit-slider-thumb]:w-[11px]',
             '[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:border [&::-webkit-slider-thumb]:border-ivory',
@@ -95,7 +95,7 @@ export const Slider = ({
       </div>
 
       {hint ? (
-        <p id={hintId} className="text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+        <p id={hintId} className="text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
           {hint}
         </p>
       ) : null}
@@ -138,7 +138,7 @@ export const Segmented = <T extends string>({ label, value, options, onChange, h
               title={option.hint}
               onClick={() => onChange(option.value)}
               className={[
-                'label-mono border px-3 py-2 transition-colors duration-200',
+                'label-mono border px-3 py-2 transition-colors duration-200 sm:px-4',
                 active
                   ? 'border-[color:var(--al-line-strong)] bg-[color:rgba(243,242,238,0.1)] text-ivory'
                   : 'border-[color:var(--al-line)] text-[color:var(--al-text-faint)] hover:border-[color:var(--al-line-strong)] hover:text-ivory',
@@ -150,7 +150,7 @@ export const Segmented = <T extends string>({ label, value, options, onChange, h
         })}
       </div>
       {hint ? (
-        <p id={hintId} className="text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+        <p id={hintId} className="text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
           {hint}
         </p>
       ) : null}
@@ -172,13 +172,15 @@ export const Toggle = ({ label, checked, onChange, hint, disabled = false }: Tog
   const hintId = `${id}-hint`;
 
   return (
-    <div className={`flex items-center justify-between gap-4 ${disabled ? 'opacity-40' : ''}`}>
+    <div
+      className={`flex min-h-[var(--al-control-tap)] items-center justify-between gap-4 ${disabled ? 'opacity-40' : ''}`}
+    >
       <div className="flex flex-col gap-1">
         <label htmlFor={id} className="label-mono cursor-pointer text-[color:var(--al-text-muted)]">
           {label}
         </label>
         {hint ? (
-          <p id={hintId} className="text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+          <p id={hintId} className="text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
             {hint}
           </p>
         ) : null}
@@ -192,7 +194,7 @@ export const Toggle = ({ label, checked, onChange, hint, disabled = false }: Tog
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={[
-          'relative h-[18px] w-9 shrink-0 border transition-colors duration-200',
+          'relative h-[22px] w-11 shrink-0 border transition-colors duration-200',
           checked
             ? 'border-[color:var(--al-line-strong)] bg-[color:rgba(243,242,238,0.16)]'
             : 'border-[color:var(--al-line)] bg-transparent',

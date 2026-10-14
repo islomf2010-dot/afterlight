@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { ACESFilmicToneMapping } from 'three';
 
@@ -13,6 +13,7 @@ import { PostFX } from '@/graphics/effects/PostFX';
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary';
 import { StaticBackdrop } from '@/components/fallback/WebGLFallback';
 import { capabilities, useQualityBudget } from '@/graphics/capabilitiesContext';
+import { CanvasLifecycle } from '@/graphics/effects/CanvasLifecycle';
 import { labParams, useLabStore, type ExhibitId } from '@/store/useLabStore';
 import { ParticleExhibit } from '@/scenes/Echoes/exhibits/ParticleExhibit';
 import { DistortionExhibit } from '@/scenes/Echoes/exhibits/DistortionExhibit';
@@ -43,6 +44,10 @@ export const LabCanvas = ({ exhibit }: LabCanvasProps) => {
   const params = useLabStore((s) => s.params);
   const [contextLost, setContextLost] = useState(false);
 
+  // Stable identities: these feed an effect's dependency list.
+  const handleContextLost = useCallback(() => setContextLost(true), []);
+  const handleContextRestored = useCallback(() => setContextLost(false), []);
+
   // The fog is driven by the lab's FOG control, so the control is real.
   const fog = STUDIO[exhibit];
 
@@ -62,20 +67,14 @@ export const LabCanvas = ({ exhibit }: LabCanvasProps) => {
             preserveDrawingBuffer: false,
           }}
           camera={{ fov: 42, near: 0.1, far: 200, position: [0, 1.6, 15] }}
-          onCreated={({ gl: renderer }) => {
-            renderer.toneMapping = ACESFilmicToneMapping;
-            const canvas = renderer.domElement;
-            const onLost = (event: Event): void => {
-              // Preventing the default lets the browser attempt restoration;
-              // until it does, we show the CSS backdrop instead of a black box.
-              event.preventDefault();
-              setContextLost(true);
-            };
-            const onRestored = (): void => setContextLost(false);
-            canvas.addEventListener('webglcontextlost', onLost, false);
-            canvas.addEventListener('webglcontextrestored', onRestored, false);
+          onCreated={({ gl }) => {
+            gl.toneMapping = ACESFilmicToneMapping;
           }}
         >
+          <CanvasLifecycle
+            onContextLost={handleContextLost}
+            onContextRestored={handleContextRestored}
+          />
           <color attach="background" args={[fog.fog]} />
           <fogExp2 attach="fog" args={[fog.fog, params.fogDensity * 0.04]} />
 

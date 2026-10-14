@@ -3,8 +3,6 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { Vector3, type PerspectiveCamera, type Camera } from 'three';
 import { damp, saturate, smootherstep } from '@/utils/math';
 import { pointerField } from './progressRegistry';
-import type { SceneId } from '@/scenes/sceneManifest';
-import { progressRegistry } from './progressRegistry';
 
 export interface CameraKeyframe {
   position: readonly [number, number, number];
@@ -157,29 +155,3 @@ export const useCameraRig = (options: CameraRigOptions): void => {
     }
   });
 };
-
-/**
- * Scroll-velocity "kick": a small forward push that decays after fast scrolls.
- * Reads like a dolly being caught up with, which is most of what makes a
- * scroll-linked camera feel physical. `getVelocity` is supplied by the caller
- * (normally `() => progressRegistry.velocity(sceneId)`).
- */
-export const useScrollVelocityKick = (
-  getVelocity: () => number,
-  strength = 0.5,
-): { offset: Vector3 } => {
-  const offset = useMemo(() => new Vector3(), []);
-  const magnitude = useRef(0);
-
-  useFrame((_, delta) => {
-    const target = Math.min(1, Math.abs(getVelocity()) / 2.4);
-    magnitude.current = damp(magnitude.current, target, target > magnitude.current ? 9 : 2.2, delta);
-    offset.setScalar(magnitude.current * strength);
-  });
-
-  return { offset };
-};
-
-/** Convenience binding of the velocity kick to a scene's registry entry. */
-export const useSceneVelocityKick = (sceneId: SceneId, strength = 0.5): { offset: Vector3 } =>
-  useScrollVelocityKick(() => progressRegistry.velocity(sceneId), strength);

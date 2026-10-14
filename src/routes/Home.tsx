@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 import { JourneyCanvas, useScenePreload } from '@/scenes/JourneyCanvas';
 import { Awakening } from '@/scenes/Awakening/Awakening';
@@ -9,7 +8,7 @@ import { TechLabel } from '@/components/ui/TechLabel';
 import { useSceneScroll } from '@/animation/useSceneScroll';
 import { useJourneyStore } from '@/store/useJourneyStore';
 import { capabilities } from '@/graphics/capabilitiesContext';
-import { scrollToTop, scrollToTarget } from '@/animation/smoothScroll';
+import { scrollToTarget } from '@/animation/smoothScroll';
 import { cue } from '@/audio/engine';
 import { SCENES, type SceneDefinition, type SceneId } from '@/scenes/sceneManifest';
 
@@ -96,13 +95,18 @@ const SceneSection = ({ scene }: { scene: SceneDefinition }) => {
           A scrim under the caption block. The film behind it ranges from pure
           black to a bright specular highlight on water; without this the text
           is legible on some frames and not others.
+
+          The bottom stop is 0.88, not a decorative fade. Measured against a
+          white frame that is what keeps the caption copy above 4.5:1 — at 0.78
+          the highlight won and the caption dropped to roughly 4:1. The upper
+          stops stay low so the scrim never reads as a panel over the image.
         */}
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 h-[46vh] sm:h-[52vh]"
           style={{
             background:
-              'linear-gradient(180deg, rgba(5,5,5,0) 0%, rgba(5,5,5,0.28) 46%, rgba(5,5,5,0.58) 80%, rgba(5,5,5,0.78) 100%)',
+              'linear-gradient(180deg, rgba(5,5,5,0) 0%, rgba(5,5,5,0.30) 44%, rgba(5,5,5,0.68) 78%, rgba(5,5,5,0.88) 100%)',
           }}
         />
         <SceneStage scene={scene} />
@@ -127,7 +131,16 @@ const SceneStage = ({ scene }: { scene: SceneDefinition }) => {
   const width = scene.id === 'threshold' ? 'max-w-[38rem]' : 'max-w-[34rem]';
 
   return (
-    <div className={`flex w-full flex-col gap-6 px-[var(--al-gutter)] pb-[max(5rem,calc(var(--al-space-8)+env(safe-area-inset-bottom)))] ${alignment}`}>
+    /*
+      `relative` is load-bearing, not decoration. An absolutely-positioned
+      sibling with `z-index: auto` paints *above* in-flow content, so without
+      this the scrim covered the caption it was meant to sit behind and cut it
+      to roughly 1.4:1. Both become positioned; this one comes later in the DOM,
+      so the caption wins.
+    */
+    <div
+      className={`relative flex w-full flex-col gap-6 px-[var(--al-gutter)] pb-[max(5rem,calc(var(--al-space-8)+env(safe-area-inset-bottom)))] ${alignment}`}
+    >
       <div className={`flex flex-col gap-4 ${width} ${scene.id === 'afterlight' ? 'mx-auto items-center' : ''}`}>
         <div className={`flex items-baseline gap-4 ${scene.id === 'afterlight' ? 'justify-center' : ''}`}>
           <TechLabel tone="muted">{scene.numeral}</TechLabel>
@@ -200,27 +213,13 @@ const ScrollHint = () => {
           cue('click');
           goToScene('void');
         }}
-        className="label-mono pointer-events-auto flex items-center gap-3 border border-[color:var(--al-line)] bg-[color:rgba(5,5,5,0.5)] px-4 py-3 text-[color:var(--al-text-muted)] backdrop-blur-sm transition-colors hover:border-[color:var(--al-line-strong)] hover:text-ivory"
+        className="label-mono pointer-events-auto flex min-h-[var(--al-control-tap)] items-center gap-3 border border-[color:var(--al-line)] bg-[color:rgba(5,5,5,0.5)] px-4 py-3 text-[color:var(--al-text-muted)] backdrop-blur-sm transition-colors hover:border-[color:var(--al-line-strong)] hover:text-ivory"
       >
         Begin
         <span aria-hidden="true" className="inline-block h-3 w-px bg-current" />
       </button>
     </div>
   );
-};
-
-/** Used by the archive to deep-link into the film. */
-export const jumpToScene = (id: SceneId, navigate: (path: string) => void): void => {
-  navigate('/');
-  window.setTimeout(() => {
-    if (id === 'awakening') scrollToTop(true);
-    else scrollToTarget(`[data-scene="${id}"]`, { offset: -2 });
-  }, 240);
-};
-
-export const useJumpToScene = () => {
-  const navigate = useNavigate();
-  return (id: SceneId) => jumpToScene(id, navigate);
 };
 
 export default Home;

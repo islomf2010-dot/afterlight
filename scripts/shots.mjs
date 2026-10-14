@@ -4,7 +4,7 @@ const BASE = 'http://127.0.0.1:4173';
 const OUT = new URL('../.shots/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 const browser = await chromium.launch({ args: ['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader'] });
-const page = await browser.newPage({ viewport: { width: 1600, height: 900 }, deviceScaleFactor: 1 });
+const page = await browser.newPage({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1 });
 await page.goto(`${BASE}/?renderer=force`, { waitUntil: 'networkidle' });
 await page.getByRole('button', { name: /^enter$/i }).waitFor({ state: 'visible' });
 await page.waitForFunction(() => {
@@ -46,11 +46,39 @@ await page.screenshot({ path: `${OUT}archive.png` });
 await page.goto(`${BASE}/credits`, { waitUntil: 'networkidle' });
 await page.waitForTimeout(1000);
 await page.screenshot({ path: `${OUT}credits.png` });
+// Phone sweep: the breakpoint, touch-target and scene-rail work all landed
+// here, so these frames are the ones that would show a regression.
 await page.setViewportSize({ width: 390, height: 844 });
 await page.goto(`${BASE}/?renderer=force`, { waitUntil: 'networkidle' });
-await page.waitForTimeout(1500);
+await page.waitForTimeout(1800);
 await page.screenshot({ path: `${OUT}mobile-intro.png` });
 await page.getByRole('button', { name: /^enter$/i }).click();
-await page.waitForTimeout(3000);
+await page.waitForTimeout(3500);
 await page.screenshot({ path: `${OUT}mobile-void.png` });
+for (const [name, f] of [
+  ['mobile-threshold', 0.48],
+  ['mobile-afterlight', 0.93],
+]) {
+  await page.evaluate((frac) => {
+    const max = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo({ top: max * frac, behavior: 'auto' });
+  }, f);
+  await page.waitForTimeout(3200);
+  await page.screenshot({ path: `${OUT}${name}.png` });
+  console.log('shot', name);
+}
+// The compact header's drawer.
+await page.goto(`${BASE}/archive`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(1200);
+await page.screenshot({ path: `${OUT}mobile-archive.png` });
+const menu = page.locator('button[aria-controls="al-mobile-nav"]');
+if (await menu.isVisible()) {
+  await menu.click();
+  await page.waitForTimeout(600);
+  await page.screenshot({ path: `${OUT}mobile-drawer.png` });
+  console.log('shot mobile-drawer');
+}
+await page.goto(`${BASE}/lab?renderer=force`, { waitUntil: 'networkidle' });
+await page.waitForTimeout(3000);
+await page.screenshot({ path: `${OUT}mobile-lab.png` });
 await browser.close();

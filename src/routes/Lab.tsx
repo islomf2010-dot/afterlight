@@ -129,14 +129,14 @@ export const Lab = () => {
                   <li key={id}>
                     <Link
                       to={`/#${id}`}
-                      className="label-mono inline-flex h-8 items-center border border-[color:var(--al-line)] px-3 text-[color:var(--al-text-faint)] transition-colors hover:border-[color:var(--al-line-strong)] hover:text-ivory"
+                      className="label-mono inline-flex h-[var(--al-control-sm)] items-center border border-[color:var(--al-line)] px-3 text-[color:var(--al-text-faint)] transition-colors hover:border-[color:var(--al-line-strong)] hover:text-ivory"
                     >
                       {id}
                     </Link>
                   </li>
                 ))}
               </ul>
-              <p className="text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+              <p className="text-2xs leading-relaxed text-[color:var(--al-text-quiet)]">
                 Particle count, distortion, pointer influence, fog and bloom are shared between the film
                 and the laboratory — change one here and the film changes too.
               </p>

@@ -32,10 +32,12 @@ const VARIANT: Record<ButtonVariant, string> = {
     'bg-[color:var(--al-surface)] text-[color:var(--al-text-muted)] border-[color:var(--al-line)] font-mono uppercase tracking-[0.22em] hover:text-ivory hover:border-[color:var(--al-line-strong)] active:text-silver',
 };
 
+// Heights come from the token layer so touch pointers get larger targets
+// without a second set of utility classes.
 const SIZE: Record<ButtonSize, string> = {
-  sm: 'h-8 px-3 text-2xs',
-  md: 'h-11 px-5 text-2xs',
-  lg: 'h-14 px-8 text-xs',
+  sm: 'h-[var(--al-control-sm)] px-3 text-2xs',
+  md: 'h-[var(--al-control-md)] px-5 text-2xs',
+  lg: 'h-[var(--al-control-lg)] px-8 text-xs',
 };
 
 export const buttonClasses = (

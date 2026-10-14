@@ -147,9 +147,13 @@ export const createCorridorMaterial = (): PatchedMaterial => {
     metalness: 0.1,
   });
 
+  // The walls are the largest surfaces in the film and fill the viewport, so
+  // their per-pixel work is the scene's dominant cost. 2D noise on a planar
+  // surface is visually indistinguishable from 3D here and costs half as much:
+  // four hashes instead of eight, per fragment, over the whole frame.
   const diffuseBody = /* glsl */ `
     float panel = smoothstep(0.02, 0.0, abs(fract(vAlWorld.z * 0.22) - 0.5) - 0.48);
-    float grain = vnoise3(vAlWorld * 1.7);
+    float grain = vnoise2(vAlWorld.xy * 1.7 + vAlWorld.zz * 0.35);
     diffuseColor.rgb *= mix(0.78, 1.1, grain) * uDetail;
     diffuseColor.rgb *= 1.0 - panel * 0.35;
 

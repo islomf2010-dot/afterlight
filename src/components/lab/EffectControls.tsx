@@ -147,7 +147,7 @@ export const EffectControls = () => {
           className={[
             'font-mono text-2xs leading-relaxed',
             lastCapture === null
-              ? 'text-[color:var(--al-text-ghost)]'
+              ? 'text-[color:var(--al-text-quiet)]'
               : lastCapture.ok
                 ? 'text-[color:var(--al-text-muted)]'
                 : 'text-[color:var(--al-danger)]',

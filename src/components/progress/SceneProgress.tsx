@@ -41,10 +41,12 @@ export const SceneProgress = () => {
         ].join(' ')}
         style={{ paddingBottom: 'calc(0.5rem + env(safe-area-inset-bottom))' }}
       >
-        <TechLabel tone="muted" className="shrink-0">
+        {/* The label yields space first; the rail is the navigation, so it
+            keeps its full touch targets and the title truncates instead. */}
+        <TechLabel tone="muted" className="min-w-0 shrink truncate">
           {active.numeral} · {active.title}
         </TechLabel>
-        <ul className="flex items-center gap-1">
+        <ul className="flex min-w-0 flex-1 items-center justify-end gap-0.5">
           {SCENES.map((scene) => (
             <li key={scene.id}>
               <button
@@ -53,14 +55,16 @@ export const SceneProgress = () => {
                 aria-label={`Go to scene ${scene.numeral}: ${scene.title}`}
                 aria-current={scene.id === activeScene ? 'true' : undefined}
                 className={[
-                  'block h-6 w-5 transition-colors duration-300',
-                  scene.id === activeScene ? 'text-ivory' : 'text-[color:var(--al-text-ghost)] hover:text-[color:var(--al-text-muted)]',
+                  // The marker is a hairline, but the hit area is not: on touch
+                  // it has to clear 44px or the rail is unusable.
+                  'grid h-[var(--al-control-track)] min-w-[var(--al-control-tap)] max-w-[var(--al-control-tap)] flex-1 place-items-center transition-colors duration-300',
+                  scene.id === activeScene ? 'text-ivory' : 'text-[color:var(--al-text-quiet)] hover:text-[color:var(--al-text-muted)]',
                 ].join(' ')}
               >
                 <span
                   aria-hidden="true"
                   className={[
-                    'mx-auto block h-px w-full transition-all duration-300',
+                    'block h-px w-full transition-all duration-300',
                     scene.id === activeScene ? 'h-[2px] bg-ivory' : 'bg-current',
                   ].join(' ')}
                 />
@@ -93,14 +97,14 @@ export const SceneProgress = () => {
                 onClick={() => goToScene(scene.id)}
                 aria-label={`Scene ${scene.numeral}: ${scene.title}`}
                 aria-current={isActive ? 'true' : undefined}
-                className="group flex items-center gap-3 py-1.5 text-right"
+                className="group flex min-h-[var(--al-control-tap)] min-w-[var(--al-control-tap)] items-center gap-3 py-1.5 text-right"
               >
                 <span
                   className={[
                     'label-mono transition-colors duration-300',
                     isActive
                       ? 'text-ivory'
-                      : 'text-[color:var(--al-text-ghost)] group-hover:text-[color:var(--al-text-muted)]',
+                      : 'text-[color:var(--al-text-quiet)] group-hover:text-[color:var(--al-text-muted)]',
                   ].join(' ')}
                 >
                   {scene.numeral}
@@ -126,5 +130,3 @@ export const SceneProgress = () => {
     </nav>
   );
 };
-
-export const sceneHref = (id: SceneId): string => (id === 'awakening' ? '/' : `/#${id}`);

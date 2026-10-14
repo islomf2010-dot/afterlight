@@ -62,7 +62,7 @@ export const VoidOverlay = () => {
       <TechLabel tone={locked ? 'live' : 'muted'} dot live>
         Focal point · {locked ? 'locked' : 'seeking'}
       </TechLabel>
-      <p className="max-w-[42ch] text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+      <p className="max-w-[42ch] text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
         {locked
           ? 'The slab is holding your attention. Its edges answer it.'
           : 'Move the pointer across the monolith. The edges answer.'}
@@ -131,7 +131,7 @@ export const FractureOverlay = ({ align }: { align: 'start' | 'center' }) => {
         flight
       </TechLabel>
 
-      <p className="max-w-[46ch] text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+      <p className="max-w-[46ch] text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
         Scroll drives the sequence by default. The controls take over when you use them — “Follow scroll”
         hands it back.
       </p>
@@ -157,7 +157,7 @@ export const ThresholdOverlay = () => {
       <TechLabel tone={open ? 'live' : 'muted'} dot live>
         Aperture · {open ? 'open' : 'closed'} · {aperture.depth.toFixed(0)} m
       </TechLabel>
-      <p className="max-w-[42ch] text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+      <p className="max-w-[42ch] text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
         Passage {Math.round(progress * 100).toString().padStart(3, '0')}% traversed. Aim the pointer at
         the far end to open it early.
       </p>
@@ -202,7 +202,7 @@ export const EchoesOverlay = () => {
           </Button>
         ))}
       </div>
-      <p className="max-w-[46ch] text-2xs leading-relaxed text-[color:var(--al-text-ghost)]">
+      <p className="max-w-[46ch] text-sm leading-relaxed text-[color:var(--al-text-quiet)]">
         Every parameter these studies run on is exposed in the laboratory, and every one of them changes
         what you are looking at.
       </p>

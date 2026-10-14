@@ -44,13 +44,3 @@ export const scrollToFraction = async (page: Page, fraction: number): Promise<vo
   // damped camera to settle.
   await page.waitForTimeout(900);
 };
-
-export const hasWebGLCanvas = (page: Page): Promise<boolean> =>
-  page.evaluate(() => {
-    const canvas = document.querySelector('canvas');
-    if (!canvas) return false;
-    const gl =
-      (canvas.getContext('webgl2') as WebGL2RenderingContext | null) ??
-      (canvas.getContext('webgl') as WebGLRenderingContext | null);
-    return Boolean(gl);
-  });

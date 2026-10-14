@@ -90,7 +90,7 @@ export const Archive = () => {
                 ) : null}
                 <Link
                   to={`/#${scene.id}`}
-                  className="label-mono px-1 py-2 text-[color:var(--al-text-ghost)] underline decoration-dotted underline-offset-4 transition-colors hover:text-[color:var(--al-text-muted)]"
+                  className="label-mono inline-flex min-h-[var(--al-control-tap)] items-center px-1 py-2 text-[color:var(--al-text-quiet)] underline decoration-dotted underline-offset-4 transition-colors hover:text-[color:var(--al-text-muted)]"
                 >
                   permalink
                 </Link>

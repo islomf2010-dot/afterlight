@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
+import { createContext, useEffect, useMemo, type ReactNode } from 'react';
 import { probeCapabilities, resolveBudget, type Capabilities, type QualityBudget } from './capabilities';
 import { applyRuntimeFlags, runtimeFlags, useSettingsStore } from '@/store/useSettingsStore';
 
@@ -35,8 +35,6 @@ export const CapabilitiesProvider = ({ children }: { children: ReactNode }) => {
   }, []);
   return <CapabilitiesContext.Provider value={value}>{children}</CapabilitiesContext.Provider>;
 };
-
-export const useCapabilities = (): Capabilities => useContext(CapabilitiesContext);
 
 /**
  * Resolves the active quality budget. Subscribes to the two settings that

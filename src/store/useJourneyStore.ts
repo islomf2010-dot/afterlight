@@ -102,6 +102,3 @@ export const useJourneyStore = create<JourneyState>((set, get) => ({
     set({ hasScrolled });
   },
 }));
-
-export const hasVisitedAll = (visited: SceneId[]): boolean =>
-  SCENE_IDS.every((id) => visited.includes(id));

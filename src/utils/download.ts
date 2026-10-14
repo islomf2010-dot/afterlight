@@ -27,10 +27,6 @@ export const downloadJson = (data: unknown, filename: string): boolean =>
     new Blob([`${JSON.stringify(data, null, 2)}\n`], { type: 'application/json' }),
     filename,
   );
-
-export const downloadText = (text: string, filename: string, mime = 'text/plain'): boolean =>
-  downloadBlob(new Blob([text], { type: `${mime};charset=utf-8` }), filename);
-
 /**
  * Opens the OS file picker and resolves with the file's text, or `null` if the
  * visitor cancelled.

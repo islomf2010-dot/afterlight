@@ -30,6 +30,4 @@ export const useMediaQuery = (query: string, initial = false): boolean => {
 
 /** Viewport classes used across the layout. */
 export const useIsMobile = (): boolean => useMediaQuery('(max-width: 767px)');
-export const useIsTablet = (): boolean => useMediaQuery('(min-width: 768px) and (max-width: 1199px)');
 export const useHasCoarsePointer = (): boolean => useMediaQuery('(pointer: coarse)');
-export const usePrefersReducedMotion = (): boolean => useMediaQuery('(prefers-reduced-motion: reduce)');
