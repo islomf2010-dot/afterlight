@@ -8,8 +8,15 @@ coverage
 .env.*
 !.env.example
 .DS_Store
+
+# Playwright
 test-results
 playwright-report
 blob-report
 .playwright
+
+# Local reference screenshots and debug output from scripts/*.mjs
+.shots
+.verify
+
 *.log
