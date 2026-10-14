@@ -1,0 +1,120 @@
+/* ============================================================================
+   AFTERLIGHT — design tokens
+   Single source of truth for colour, type, spacing, motion and elevation.
+   Consumed by Tailwind (via @theme) and by hand-written component CSS.
+   ========================================================================== */
+
+:root {
+  /* --- Core palette (art-directed, restrained) ---------------------------- */
+  --al-obsidian: #050505;
+  --al-graphite: #151719;
+  --al-silver: #bfc5ca;
+  --al-ivory: #f3f2ee;
+
+  /* --- Derived surface ramp --------------------------------------------- */
+  --al-void: #000000;
+  --al-basalt: #0b0c0e;
+  --al-slate: #1d2024;
+  --al-ash: #2a2e33;
+  --al-smoke: #6f767d;
+  --al-mist: #8d949b;
+
+  /* --- Semantic colour --------------------------------------------------- */
+  --al-text: var(--al-ivory);
+  --al-text-muted: rgba(191, 197, 202, 0.62);
+  --al-text-faint: rgba(191, 197, 202, 0.34);
+  --al-text-ghost: rgba(191, 197, 202, 0.18);
+  --al-line: rgba(191, 197, 202, 0.14);
+  --al-line-strong: rgba(191, 197, 202, 0.3);
+  --al-surface: rgba(11, 12, 14, 0.72);
+  --al-surface-solid: #0b0c0e;
+  --al-surface-raised: rgba(21, 23, 25, 0.86);
+  --al-accent: #dfe6ec;
+  --al-focus: #8fd4ff;
+  --al-danger: #ff6b5e;
+  --al-ok: #7fe0b0;
+
+  /* --- Typography -------------------------------------------------------- */
+  --al-font-display: 'Space Grotesk Variable', 'Space Grotesk', ui-sans-serif, system-ui,
+    -apple-system, 'Segoe UI', sans-serif;
+  --al-font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas,
+    monospace;
+
+  /* Fluid editorial scale — clamp(min, preferred, max) */
+  --al-text-2xs: 0.625rem;
+  --al-text-xs: 0.6875rem;
+  --al-text-sm: 0.8125rem;
+  --al-text-base: 0.9375rem;
+  --al-text-md: 1.0625rem;
+  --al-text-lg: clamp(1.25rem, 0.9rem + 1.6vw, 2rem);
+  --al-text-xl: clamp(1.75rem, 1.1rem + 3.2vw, 3.5rem);
+  --al-text-2xl: clamp(2.5rem, 1.2rem + 6.4vw, 7rem);
+  --al-text-3xl: clamp(3.25rem, 1rem + 11vw, 12rem);
+
+  --al-tracking-label: 0.34em;
+  --al-tracking-display: -0.03em;
+  --al-tracking-wide: 0.16em;
+
+  /* --- Space (8pt base) -------------------------------------------------- */
+  --al-space-1: 0.25rem;
+  --al-space-2: 0.5rem;
+  --al-space-3: 0.75rem;
+  --al-space-4: 1rem;
+  --al-space-5: 1.5rem;
+  --al-space-6: 2rem;
+  --al-space-7: 3rem;
+  --al-space-8: 4.5rem;
+  --al-space-9: 7rem;
+  --al-space-10: 11rem;
+
+  /* --- Layout ------------------------------------------------------------ */
+  --al-gutter: clamp(1.125rem, 0.6rem + 2.4vw, 3.5rem);
+  --al-measure: 62ch;
+  --al-nav-h: 3.5rem;
+  --al-panel-w: min(22rem, calc(100vw - 2 * var(--al-gutter)));
+
+  /* --- Radii / elevation ------------------------------------------------- */
+  --al-radius-sm: 2px;
+  --al-radius-md: 4px;
+  --al-radius-pill: 999px;
+  --al-shadow-panel: 0 24px 80px -32px rgba(0, 0, 0, 0.95);
+  --al-shadow-lift: 0 18px 50px -28px rgba(0, 0, 0, 0.9);
+
+  /* --- Motion ------------------------------------------------------------ */
+  --al-dur-instant: 120ms;
+  --al-dur-fast: 220ms;
+  --al-dur-base: 420ms;
+  --al-dur-slow: 900ms;
+  --al-dur-cinematic: 1800ms;
+  --al-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --al-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --al-ease-linear: linear;
+
+  /* --- Runtime-controlled (mutated by the settings store) ----------------- */
+  --al-motion-scale: 1;
+  --al-grain-opacity: 0.055;
+  --al-cursor-size: 26px;
+
+  color-scheme: dark;
+}
+
+/* Reduced motion: honours both the OS setting and the in-app switch. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --al-motion-scale: 0.001;
+    --al-dur-instant: 1ms;
+    --al-dur-fast: 1ms;
+    --al-dur-base: 1ms;
+    --al-dur-slow: 1ms;
+    --al-dur-cinematic: 1ms;
+  }
+}
+
+:root[data-motion='reduced'] {
+  --al-motion-scale: 0.001;
+  --al-dur-instant: 1ms;
+  --al-dur-fast: 1ms;
+  --al-dur-base: 1ms;
+  --al-dur-slow: 1ms;
+  --al-dur-cinematic: 1ms;
+}
