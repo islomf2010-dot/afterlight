@@ -15,8 +15,9 @@ playwright-report
 blob-report
 .playwright
 
-# Local reference screenshots and debug output from scripts/*.mjs
+# Local reference screenshots, debug output and GIF frame captures
 .shots
 .verify
+.frames
 
 *.log

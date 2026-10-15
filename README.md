@@ -20,6 +20,16 @@ typefaces, packaged locally.
   from fixed seeds.</em>
 </div>
 
+### The film
+
+![A recording of the film scrolling from The Void through Fracture, Echoes and Afterlight](docs/preview.gif)
+
+<sub>
+The recording above is `scripts/gif.mjs` scrolling the real page and
+screenshoting it — the same scroll a visitor makes. Nothing in it is staged,
+and no second renderer produced it.
+</sub>
+
 ---
 
 ## Contents
