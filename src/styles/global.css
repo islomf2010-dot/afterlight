@@ -289,3 +289,123 @@
   color: var(--al-text-muted);
   max-width: var(--al-measure);
 }
+
+/* ---------------------------------------------------------------------------
+   Liquid glass (adapted from liquid-glass-js, MIT © 2025 Armagan Amcalar).
+
+   Upstream's runtime is not used — it needs html2canvas to rasterise the page
+   and its own WebGL context, and it cannot capture a WebGL canvas, which is
+   what sits behind every surface here. Its *model* is carried instead: the same
+   rounded rectangle, the same edge / rim / base weighting with the corners
+   boosted over the straight sides, the same cold silver tint.
+
+   The refraction itself is `backdrop-filter`, which composites on the GPU and
+   costs no context. Where it is unsupported, `@supports` drops the surface to a
+   plain translucent panel with a hairline border — still legible, still the
+   same composition, no layout shift.
+   --------------------------------------------------------------------------- */
+
+.glass-surface {
+  --al-glass-radius: 0.5rem;
+  --al-glass-blur: 14px;
+  --al-glass-saturate: 1.25;
+  --al-glass-tint: 0.05;
+  --al-glass-edge: 0.5;
+  --al-glass-rim: 0.7;
+  --al-glass-base: 0.35;
+
+  position: relative;
+  isolation: isolate;
+  border-radius: var(--al-glass-radius);
+  /* Kept out of the box model: glass must never change a control's size. */
+  box-sizing: border-box;
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .glass-surface {
+    background-color: rgba(21, 23, 25, calc(0.18 + var(--al-glass-base) * 0.22));
+    -webkit-backdrop-filter: blur(var(--al-glass-blur)) saturate(var(--al-glass-saturate));
+    backdrop-filter: blur(var(--al-glass-blur)) saturate(var(--al-glass-saturate));
+    box-shadow:
+      inset 0 1px 0 rgb(243 242 238 / calc(0.1 * var(--al-glass-rim))),
+      inset 0 -1px 0 rgb(5 5 5 / 0.5),
+      0 1px 2px rgb(5 5 5 / 0.4);
+  }
+
+  /*
+    Edge light. A conic-gradient rim reproduces the library's corner boost: the
+    corners receive more light than the straight sides because they turn through
+    more of the light's arc. Masked to the border so it never washes the content.
+  */
+  .glass-surface::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(
+      from 210deg,
+      rgb(243 242 238 / calc(0.42 * var(--al-glass-edge))),
+      rgb(191 197 202 / calc(0.08 * var(--al-glass-edge))) 25%,
+      rgb(243 242 238 / calc(0.3 * var(--al-glass-edge))) 50%,
+      rgb(191 197 202 / calc(0.06 * var(--al-glass-edge))) 75%,
+      rgb(243 242 238 / calc(0.42 * var(--al-glass-edge)))
+    );
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-surface {
+    background-color: rgba(21, 23, 25, 0.72);
+    border: 1px solid var(--al-line);
+  }
+}
+
+/* Content must always sit above the rim decoration. */
+.glass-surface > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* --- tones ----------------------------------------------------------------
+   Primary is the one place glass is loud enough to read as the primary action.
+   Everything else stays quiet; a film that put glass on every surface would be
+   a demo, not a film. */
+
+.glass-surface[data-glass='primary'] {
+  --al-glass-radius: 0.375rem;
+  --al-glass-blur: 18px;
+  --al-glass-base: 0.5;
+  --al-glass-edge: 0.85;
+  --al-glass-rim: 1;
+}
+
+.glass-surface[data-glass='quiet'] {
+  --al-glass-blur: 10px;
+  --al-glass-base: 0.22;
+  --al-glass-edge: 0.3;
+  --al-glass-rim: 0.45;
+}
+
+/*
+   Reduced motion: the surface has no transition of its own, but anything
+   layered on it inherits this project-wide behaviour, and a blurred edge that
+   animates is exactly the kind of thing that has to be asked not to.
+*/
+@media (prefers-reduced-motion: reduce) {
+  .glass-surface,
+  .glass-surface::before {
+    transition: none !important;
+    animation: none !important;
+  }
+}

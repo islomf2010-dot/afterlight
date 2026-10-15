@@ -9,6 +9,7 @@ import { StaticBackdrop } from '@/components/fallback/WebGLFallback';
 import { useLabStore, type ExhibitId } from '@/store/useLabStore';
 import { capabilities } from '@/graphics/capabilitiesContext';
 import { SCENE_IDS } from '@/scenes/sceneManifest';
+import { PLAYGROUNDS, isPlayground, type PlaygroundId } from '@/components/lab/playground';
 
 interface StudyMeta {
   id: ExhibitId;
@@ -49,6 +50,8 @@ export const STUDIES: readonly StudyMeta[] = [
 const isExhibit = (value: string | undefined): value is ExhibitId =>
   value === 'particles' || value === 'shaders' || value === 'portal';
 
+const isKnownStudy = (value: string | undefined): boolean => isExhibit(value) || isPlayground(value);
+
 /**
  * THE LABORATORY — `/lab` and `/lab/:study`.
  *
@@ -61,19 +64,24 @@ export const Lab = () => {
   const setFocus = useLabStore((s) => s.setFocus);
 
   const raw = params.study;
+  const playground: PlaygroundId | undefined = isPlayground(raw) ? raw : undefined;
   const exhibit: ExhibitId = isExhibit(raw) ? raw : 'particles';
 
-  // Keep the shared focus mirror in sync so the film and the lab agree.
+  // Keep the shared focus mirror in sync so the film and the lab agree. A
+  // playground experiment does not set focus: it is not one of the film's
+  // exhibits, and claiming otherwise would move the Echoes camera.
   useEffect(() => {
+    if (playground) return;
     setFocus(exhibit);
-  }, [exhibit, setFocus]);
+  }, [exhibit, playground, setFocus]);
 
   // An unknown study name is a genuine 404, not a silent redirect to the hub.
-  if (raw !== undefined && !isExhibit(raw)) {
+  if (raw !== undefined && !isKnownStudy(raw)) {
     return <Navigate to="/404" replace />;
   }
 
   const study = STUDIES.find((s) => s.id === exhibit) ?? STUDIES[0];
+  const experiment = playground ? PLAYGROUNDS.find((p) => p.id === playground) : undefined;
   const webgl = capabilities.webgl;
 
   return (
@@ -81,7 +89,7 @@ export const Lab = () => {
       <div className="fixed inset-0 z-0">
         <div className="absolute inset-x-0 bottom-0 top-[var(--al-nav-h)]">
           {webgl ? (
-            <LabCanvas exhibit={exhibit} />
+            <LabCanvas exhibit={exhibit} playground={playground} />
           ) : (
             <StaticBackdrop />
           )}
@@ -95,31 +103,55 @@ export const Lab = () => {
             <SectionHeading
               numeral="02 / Laboratory"
               title="Studies"
-              lede="Three effects taken from the film and left running. Every parameter is exposed, validated and saved; nothing here is decorative."
+              lede="Three effects taken from the film and left running, plus a playground for the libraries this project integrates. Every film parameter is exposed, validated and saved; nothing here is decorative."
             />
 
             <nav aria-label="Studies" className="flex flex-wrap gap-2">
               {STUDIES.map((entry) => (
                 <Button
                   key={entry.id}
-                  variant={entry.id === exhibit ? 'outline' : 'ghost'}
+                  variant={entry.id === exhibit && !playground ? 'outline' : 'ghost'}
                   size="md"
                   to={`/lab/${entry.id}`}
-                  aria-current={entry.id === exhibit ? 'page' : undefined}
+                  aria-current={entry.id === exhibit && !playground ? 'page' : undefined}
                 >
                   {entry.numeral} · {entry.title}
                 </Button>
               ))}
             </nav>
 
+            <div className="flex flex-col gap-3">
+              <TechLabel tone="muted">Library playground</TechLabel>
+              <nav aria-label="Library playground" className="flex flex-wrap gap-2">
+                {PLAYGROUNDS.map((entry) => (
+                  <Button
+                    key={entry.id}
+                    variant={entry.id === playground ? 'outline' : 'ghost'}
+                    size="md"
+                    to={`/lab/${entry.id}`}
+                    aria-current={entry.id === playground ? 'page' : undefined}
+                  >
+                    {entry.numeral} · {entry.title}
+                  </Button>
+                ))}
+              </nav>
+            </div>
+
             <article className="panel-surface flex max-w-[42rem] flex-col gap-4 p-6">
               <div className="flex items-baseline gap-4">
-                <TechLabel tone="muted">Study {study.numeral}</TechLabel>
+                <TechLabel tone="muted">
+                  {experiment ? `Experiment ${experiment.numeral}` : `Study ${study.numeral}`}
+                </TechLabel>
                 <span aria-hidden="true" className="h-px flex-1 bg-[color:var(--al-line)]" />
+                {experiment ? <TechLabel tone="muted">{experiment.source}</TechLabel> : null}
               </div>
-              <h2 className="display-title text-lg">{study.title}</h2>
-              <p className="text-base leading-relaxed text-[color:var(--al-text-muted)]">{study.summary}</p>
-              <p className="text-sm leading-relaxed text-[color:var(--al-text-faint)]">{study.affects}</p>
+              <h2 className="display-title text-lg">{experiment ? experiment.title : study.title}</h2>
+              <p className="text-base leading-relaxed text-[color:var(--al-text-muted)]">
+                {experiment ? experiment.summary : study.summary}
+              </p>
+              <p className="text-sm leading-relaxed text-[color:var(--al-text-faint)]">
+                {experiment ? experiment.affects : study.affects}
+              </p>
             </article>
 
             <section className="flex max-w-[42rem] flex-col gap-3">

@@ -22,8 +22,15 @@ type ButtonProps = BaseProps &
   };
 
 const VARIANT: Record<ButtonVariant, string> = {
+  /*
+    The one control that gets glass. `glass-surface` is additive and carries no
+    layout of its own — it is a background, a blurred backdrop and an edge
+    light — so the button stays a real <button> with its own focus ring, its
+    own height token and its own disabled state. Everything else in the film
+    stays flat: glass on every surface would read as a component demo.
+  */
   primary:
-    'bg-ivory text-obsidian border-ivory hover:bg-silver hover:border-silver active:bg-ash active:text-ivory',
+    'glass-surface bg-ivory text-obsidian border-ivory hover:bg-silver hover:border-silver active:bg-ash active:text-ivory',
   outline:
     'bg-transparent text-ivory border-[color:var(--al-line-strong)] hover:border-ivory hover:bg-[color:rgba(243,242,238,0.06)] active:bg-[color:rgba(243,242,238,0.12)]',
   ghost:

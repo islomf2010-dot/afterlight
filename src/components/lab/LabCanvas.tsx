@@ -19,6 +19,10 @@ import { ParticleExhibit } from '@/scenes/Echoes/exhibits/ParticleExhibit';
 import { DistortionExhibit } from '@/scenes/Echoes/exhibits/DistortionExhibit';
 import { PortalExhibit } from '@/scenes/Echoes/exhibits/PortalExhibit';
 import { ExhibitBackdrop } from '@/scenes/Echoes/exhibits/ExhibitBackdrop';
+import { GradientStudy } from './studies/GradientStudy';
+import { LiquidGlassSurface } from './studies/LiquidGlassSurface';
+import { LiquidWordmarkStage } from './studies/LiquidWordmarkStage';
+import type { PlaygroundId } from './playground';
 
 /** Studio backdrop for each study — each exhibit gets its own air. */
 const STUDIO: Record<ExhibitId, { fog: string; density: number }> = {
@@ -27,8 +31,17 @@ const STUDIO: Record<ExhibitId, { fog: string; density: number }> = {
   portal: { fog: '#06080a', density: 0.018 },
 };
 
+/** The library experiments get their own air so they never read as a film scene. */
+const PLAYGROUND_STUDIO: Record<PlaygroundId, { fog: string; density: number }> = {
+  liquid: { fog: '#050607', density: 0.006 },
+  gradient: { fog: '#050505', density: 0.004 },
+  glass: { fog: '#08090b', density: 0.01 },
+};
+
 export interface LabCanvasProps {
   exhibit: ExhibitId;
+  /** Library experiment, if this canvas is showing one instead of a film study. */
+  playground?: PlaygroundId;
 }
 
 /**
@@ -38,7 +51,7 @@ export interface LabCanvasProps {
  * disturb the film's camera, progress or render loop — and so leaving the lab
  * tears the context down cleanly.
  */
-export const LabCanvas = ({ exhibit }: LabCanvasProps) => {
+export const LabCanvas = ({ exhibit, playground }: LabCanvasProps) => {
   const budget = useQualityBudget();
   const paused = useLabStore((s) => s.paused);
   const params = useLabStore((s) => s.params);
@@ -49,7 +62,7 @@ export const LabCanvas = ({ exhibit }: LabCanvasProps) => {
   const handleContextRestored = useCallback(() => setContextLost(false), []);
 
   // The fog is driven by the lab's FOG control, so the control is real.
-  const fog = STUDIO[exhibit];
+  const fog = playground ? PLAYGROUND_STUDIO[playground] : STUDIO[exhibit];
 
   if (!capabilities.webgl || contextLost) return <StaticBackdrop active />;
 
@@ -88,7 +101,12 @@ export const LabCanvas = ({ exhibit }: LabCanvasProps) => {
           <CaptureReporter />
 
           <Suspense fallback={null}>
-            <LabStage exhibit={exhibit} density={budget.density} highDetail={budget.highPost} />
+            <LabStage
+              exhibit={exhibit}
+              playground={playground}
+              density={budget.density}
+              highDetail={budget.highPost}
+            />
           </Suspense>
 
           <ErrorBoundary>
@@ -105,13 +123,35 @@ export const LabCanvas = ({ exhibit }: LabCanvasProps) => {
  * disposes the previous study's geometries and materials — the same guarantee a
  * route change gives you, without paying for a navigation.
  */
-const LabStage = ({ exhibit, density, highDetail }: { exhibit: ExhibitId; density: number; highDetail: boolean }) => {
+const LabStage = ({
+  exhibit,
+  playground,
+  density,
+  highDetail,
+}: {
+  exhibit: ExhibitId;
+  playground?: PlaygroundId;
+  density: number;
+  highDetail: boolean;
+}) => {
   const params = useLabStore((s) => s.params);
   useEffect(() => {
     // Keep the imperative mirror honest even if a future code path writes to the
     // store without the setter (e.g. a restored session).
     Object.assign(labParams, params);
   }, [params]);
+
+  // A playground experiment replaces the stage entirely rather than sharing
+  // it: these are not film exhibits and must not inherit their fog or backdrop.
+  if (playground) {
+    return (
+      <group>
+        {playground === 'gradient' ? <GradientStudy /> : null}
+        {playground === 'glass' ? <LiquidGlassSurface /> : null}
+        {playground === 'liquid' ? <LiquidWordmarkStage /> : null}
+      </group>
+    );
+  }
 
   return (
     <group>

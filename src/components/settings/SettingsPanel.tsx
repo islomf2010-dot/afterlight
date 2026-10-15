@@ -58,7 +58,8 @@ export const SettingsPanel = ({ open, onClose }: SettingsPanelProps) => {
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="relative flex h-full w-[min(24rem,100vw)] flex-col gap-5 overflow-y-auto border-l border-[color:var(--al-line)] bg-[color:rgba(11,12,14,0.94)] p-[var(--al-gutter)] shadow-[var(--al-shadow-panel)]"
+        className="glass-surface relative flex h-full w-[min(24rem,100vw)] flex-col gap-5 overflow-y-auto p-[var(--al-gutter)] shadow-[var(--al-shadow-panel)]"
+          data-glass="quiet"
         style={{ paddingBottom: 'calc(var(--al-gutter) + env(safe-area-inset-bottom))' }}
       >
         <header className="flex items-start justify-between gap-4">

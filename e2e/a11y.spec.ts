@@ -161,6 +161,11 @@ test.describe('accessibility & settings', () => {
 
   test('every control has a visible focus style and a disabled state where relevant', async ({ page }) => {
     await page.goto('/lab');
+    // Wait for the page to actually mount before counting. /lab lazy-loads its
+    // studies and playground, and a bare goto can resolve while the shell is
+    // still empty — which reported zero visible buttons and failed this test
+    // intermittently.
+    await expect(page.getByRole('heading', { name: 'Studies' })).toBeVisible();
     // ENTER-style disabled states exist on the capture button while capturing;
     // before that, the panel must expose no dead (always-disabled) controls.
     // Every control must expose an accessible name — either visible text or an

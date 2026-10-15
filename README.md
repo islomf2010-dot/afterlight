@@ -24,6 +24,7 @@ typefaces, packaged locally.
 - [Architecture](#architecture)
 - [How the animation system works](#how-the-animation-system-works)
 - [Performance](#performance)
+- [Integrated libraries](#integrated-libraries)
 - [Accessibility](#accessibility)
 - [Testing](#testing)
 - [Assets and licensing](#assets-and-licensing)
@@ -89,6 +90,7 @@ failure, so they are usable in CI as well as by hand.
 | `scripts/responsive.mjs` | 4 viewports × 4 routes: overflow, clipping, touch-target sizes. `--shots` also writes screenshots |
 | `scripts/contrast.mjs` | Measures the painted luminance of every scene caption against WCAG AA and fails if any block falls short |
 | `scripts/perf.mjs` | Frame-time sampling per scene, per laboratory study and per quality preset |
+| `scripts/library-check.mjs` | The integrated library experiments: do they render, do they animate, do they release their context, is reduced motion honoured |
 | `scripts/shots.mjs` | Writes reference screenshots of every scene, route and the phone layout to `.shots/` |
 
 ```bash
@@ -439,6 +441,147 @@ settles on a composed frame.
 npm test
 npm run test:e2e       # builds and serves automatically
 ```
+
+---
+
+## Integrated libraries
+
+Four projects were evaluated against this codebase. **Two are installed
+packages; two are standalone demos with no `package.json` and were adapted
+rather than installed.** None of them replaced the existing architecture, and
+none added a second WebGL context.
+
+| Project | Form | Licence | Status |
+| --- | --- | --- | --- |
+| `@react-three/fiber` | npm package, already present at **9.8.1** | MIT | Reused as the existing foundation. No change of renderer. |
+| `@shadergradient/react` | npm package **2.4.20** | MIT | Installed. Mesh form, mounted inside the existing canvas. |
+| `liquid-glass-js` | **no package.json** — static script | MIT (© 2025 Armagan Amcalar) | Shader *model* adapted; its runtime rejected, see below. |
+| `liquid-logo` | **no package.json** — vanilla WebGL demo | MIT (© 2025 Alan Ang) | Fragment shader ported; **no assets from the repo are shipped.** |
+
+### Why two runtimes were rejected
+
+Both `liquid-glass-js` and `liquid-logo` are demonstration pages, not libraries:
+they have no package manifest, no ES module entry and no declared dependencies.
+
+`liquid-glass-js` obtains its backdrop by calling `html2canvas(document.body)`,
+rasterising the whole document, and feeding the bitmap to **its own WebGL
+context** created with `preserveDrawingBuffer: true`. That is not usable here:
+it would be a second context competing with the film's; `html2canvas` cannot
+rasterise a WebGL canvas, which is precisely what sits behind every surface it
+would need to refract; and a full-document rasterisation on every resize is not
+a cost this project will pay for a decorative layer. Its *model* — the rounded
+rectangle SDF, the displacement derived from it, the separate edge/rim/base
+weights and the corner boost — is carried into `LiquidGlassSurface` and into
+`.glass-surface` in CSS, where it costs no context.
+
+`liquid-logo` masks its effect with third-party brand logos (Apple, Nike,
+Pepsi, PlayStation and others). Those are trademarks and none of them ship
+here. The mask is generated from live text at runtime instead, so the wordmark
+is an editable string and the repository still contains no binary image asset.
+
+### The liquid metal wordmark
+
+`LiquidWordmark` renders inside whichever canvas is already open — it is a
+`<mesh>`, not a `<Canvas>`. The flow-field integration, the edge-detect
+deflection around the mask outline and the iterative tanh-style tone curve come
+from upstream; the debug multipliers that cancel themselves out in the original
+(`sin(t * 0.0 + …)`, `sin(… + time) * 0.00`) were removed rather than copied.
+
+Three corrections were needed to make it work at all:
+
+1. **Sizing.** The plane cannot be sized in pixels — three's world units have no
+   relation to them. The first build produced a plane roughly sixteen times the
+   height of the frustum, which displayed a hugely magnified crop of the mask as
+   an undifferentiated bright field. It is now derived from the camera's own
+   field of view, so `fill` means "fraction of the visible width" and nothing
+   else.
+2. **GLSL.** `vec4 expLx = exp(-uExpFactor * lens)` relies on a scalar-to-vector
+   widening that does not hold on every target three compiles for; it failed to
+   build on WebGL2. Now written `vec4(...)` explicitly.
+3. **Tone.** At full range the wordmark washed out the entire page behind it.
+   The band is biased low and the rim bounded, so it sits *in* the frame.
+
+### ShaderGradient
+
+The package ships two entry points. `ShaderGradientCanvas` creates its own
+`<Canvas>`; `ShaderGradient` renders a plain `<mesh>`, so the mesh form is used
+and the experiment costs one draw call in the context the laboratory already
+owns.
+
+Three of its subcomponents are switched off, each for a concrete reason: its
+`<PostProcessing>` would install a second `EffectComposer` over the laboratory's
+own; `toggleAxis` is a debug gizmo; and its `Controls` grabs the shared camera
+through `useThree` and drives it with `camera-controls`, which would fight the
+film's scroll-driven camera rig. The gradient study is therefore lab-only and is
+never mounted in the film.
+
+**Compatibility fix required.** `@shadergradient/react` 2.4.20 ships shaders
+that `#include` six chunks three removed or renamed in r152 — `uv2_pars_vertex`,
+`uv2_vertex`, `uv2_pars_fragment`, `encodings_fragment`,
+`transmissionmap_pars_fragment` and `transmissionmap_fragment`. On three 0.186.1
+every one of its materials fails to link. `shadergradientThreeCompat.ts`
+restores them with their original pre-r152 content. They are `USE_*`-guarded and
+the package never defines those, so they expand to nothing exactly as they did
+on the three they were written for.
+
+**Animation ownership.** The package only advances `uTime` while
+`animate="on"`, using its own local clock. That was the first build's setting
+and it meant the study kept animating under reduced motion — measured, not
+assumed. With `animate="on"` the package's `useFrame` runs after this
+component's and overwrites the value written there. It is now `animate="off"`
+with `uTime` driven directly from the shared clock, so PAUSE and reduced motion
+apply.
+
+### Liquid glass in the interface
+
+`.glass-surface` in `src/styles/global.css` is CSS: `backdrop-filter` for the
+refraction, a masked conic-gradient rim for the edge light (the conic gradient is
+what reproduces the library's corner boost — corners turn through more of the
+light's arc than the straight sides), and an `@supports` guard that falls back to
+a plain translucent panel with a hairline border where `backdrop-filter` is
+unsupported. No layout of its own, so it never changes a control's size.
+
+Applied selectively, as a film should be: the `primary` button variant (which is
+the ENTER control) and the settings panel at the `quiet` tone. Everything else
+stays flat — glass on every surface would read as a component demo.
+
+### Playground
+
+`/lab` keeps its three film studies exactly as they were. The film is described
+to the visitor as "Study I / II / III" and the Echoes overlay reports a live
+"Study N of 3", so the library experiments are a separate, separately-labelled
+enumeration at `/lab/liquid`, `/lab/gradient` and `/lab/glass`. A playground
+route does not set the shared focus mirror, because claiming to be one of the
+film's exhibits would move the Echoes camera.
+
+### Verification
+
+`node scripts/library-check.mjs` — 15 checks. Each study must paint a frame that
+is not empty, not flat, and that changes over time; reduced motion must stop the
+motion; the laboratory must own exactly one canvas; leaving it must release it;
+and the console must be clean.
+
+Measuring "did it change" took three attempts, each of which was wrong:
+
+- **Mean absolute difference** is swamped by the app's film grain, which
+  perturbs every pixel every frame.
+- **A high percentile across the whole frame** misses a small effect: the
+  wordmark occupies a few percent of the pixels, so a p99 taken over the entire
+  frame lands outside it.
+- **The final instrument** is the *fraction of pixels that moved by more than
+  four levels*, with the grain overlay disabled for the measurement. A frozen
+  frame scores 0.00%; the wordmark scores 0.38% and the gradient 25.9%.
+
+That last measurement is what caught the gradient's reduced-motion bug.
+
+### Known limitation
+
+**The liquid glass study does not perceptibly animate.** It renders correctly
+and every uniform is wired to the material, but the largest per-pixel change
+across the whole frame over 2.5 s is one level, against a frozen-frame baseline
+of zero. Refraction and sheen both act on a smooth generated field, and at this
+size neither displaces it enough to move a pixel. `library-check.mjs` reports
+this as a `WARN`, not a pass. It is unfinished, not working.
 
 ---
 
