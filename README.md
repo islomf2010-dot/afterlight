@@ -12,6 +12,14 @@ Everything you see is generated in the browser — geometry, materials, water,
 particles, grain and sound. The only third-party assets in the build are two
 typefaces, packaged locally.
 
+![AFTERLIGHT — six scenes, one canvas, nothing downloaded](docs/banner.png)
+
+<div align="center">
+  <em>A scroll-driven WebGL film. Six scenes share a single canvas, and every
+  pixel — geometry, water, particles, grain, ambience — is generated at runtime
+  from fixed seeds.</em>
+</div>
+
 ---
 
 ## Contents
@@ -587,7 +595,8 @@ this as a `WARN`, not a pass. It is unfinished, not working.
 
 ## Assets and licensing
 
-There are **no downloaded images, models, HDRIs or audio files** in this build.
+There are **no downloaded images, models, HDRIs or audio files** in this build —
+the only files under `assets/` are screenshots this repository took of itself.
 
 | Asset | Source | Licence |
 | --- | --- | --- |

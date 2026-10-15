@@ -1,0 +1,54 @@
+MIT License
+
+Copyright (c) 2026 dantez.exe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+Third-party notices
+--------------------
+
+This project bundles or adapts the following third-party work. None of it is
+redistributed as source; each is either an npm dependency or an algorithm
+reimplemented from the upstream source, and each retains its own licence.
+
+  @react-three/fiber, @react-three/drei, three, postprocessing
+      MIT — pmndrs / three.js authors. Installed as dependencies.
+
+  @shadergradient/react
+      MIT — © ruucm. Installed as a dependency.
+
+  liquid-glass-js  https://github.com/dashersw/liquid-glass-js
+      MIT — © 2025 Armagan Amcalar.
+      The rounded-rectangle SDF, displacement and edge/rim/base weighting are
+      reimplemented in this project's own GLSL and CSS. None of the upstream
+      JavaScript is included.
+
+  liquid-logo  https://github.com/collidingScopes/liquid-logo
+      MIT — © 2025 Alan Ang.
+      The flow-field integration, edge-detect deflection and tone curve are
+      reimplemented in this project's own GLSL. No asset from the upstream
+      repository is included — it ships third-party trademarked logos, none of
+      which are redistributed here. The wordmark mask is generated from live
+      text at runtime.
+
+  Space Grotesk — © Florian Karsten, SIL OFL 1.1.
+  IBM Plex Mono  — © Mike Abbink, SIL OFL 1.1.
+  Simplex noise (GLSL) — Ashima Arts / Stefan Gustavson, MIT.
