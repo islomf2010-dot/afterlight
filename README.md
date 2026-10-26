@@ -3,6 +3,9 @@
 An interactive cinematic WebGL experience. Six scenes, one WebGL context, no
 downloaded assets.
 
+[![Live Demonstration](https://img.shields.io/badge/Live_Demo-Interactive_WebGL_Film-E11D48?style=for-the-badge)](https://islomf2010-dot.github.io/afterlight/)
+[![Source Code](https://img.shields.io/badge/Source-GitHub-161B26?style=for-the-badge)](https://github.com/islomf2010-dot/afterlight)
+
 You arrive at a point of light in total darkness. You press **ENTER**. The
 light goes out, and the film begins: a monolith above an endless ocean, a
 structure that comes apart, an impossible corridor, three studies left running,
